@@ -1,3 +1,20 @@
 <resources>
     <string name="app_name">Easy Redmine Tracker</string>
+
+    <string name="companyName">Unternehmen</string>
+
+
+    <string name="action_settings">Settings</string>
+    <string name="pref_title_companyname_text">Unternehmen</string>
+    <string name="pref_summary_companyname_text">EasyRedmine-Name Ihres Unternehmens</string>
+    <string name="pref_default_companyname_text"></string>
+
+
+    <string name="pref_title_apikey_text">API-Key</string>
+    <string name="pref_summary_apikey_text">Ihr API-Key</string>
+    <string name="pref_default_apikey_text"></string>
+
+    <string name="pref_title_userid_text">User-ID</string>
+    <string name="pref_summary_userid_text">ID Ihres EasyRedmine-Zugangs</string>
+    <string name="pref_default_userid_text"></string>
 </resources>
