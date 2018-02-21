@@ -4,11 +4,15 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.StrictMode;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+import android.support.annotation.RequiresApi;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -20,6 +24,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.w3c.dom.Document;
@@ -42,6 +47,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -68,89 +74,80 @@ public class List extends AppCompatActivity {
         int id = item.getItemId();
         if (id == R.id.settings) {
             startActivity(new Intent(this, SettingsActivity.class));
-
         }
-        return true;
+        if (id == R.id.home) {
+            super.onBackPressed();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
-
-
 
     @Override
     public void onResume() {
         super.onResume();
-        // To use the preferences when the activity starts and when the user navigates back from the settings activity.
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-
         String defaultCompanyName = getResources().getString(R.string.pref_default_companyname_text);
         companyName = preferences.getString("companyName", defaultCompanyName);
         String defaultApiKey = getResources().getString(R.string.pref_default_apikey_text);
         apiKey = preferences.getString("apiKey", defaultApiKey);
         String defaultUserId = getResources().getString(R.string.pref_default_userid_text);
         userId = preferences.getString("userId", defaultUserId);
-
-
-        downloadFile();
-        Toast.makeText(getApplicationContext(), "Name: "+companyName, Toast.LENGTH_SHORT).show();
-
+        if((!preferences.contains("companyName")) || (!preferences.contains("apiKey")) || (!preferences.contains("userId")
+        || companyName.isEmpty() ||  apiKey.isEmpty() || userId.isEmpty())){
+            Snackbar snacky = Snackbar.make(findViewById(R.id.ListContainer), R.string.makeSettingsFirst,
+                    Snackbar.LENGTH_INDEFINITE);
+            View snackyView = snacky.getView();
+            TextView snackyTextView = (TextView) snackyView.findViewById(android.support.design.R.id.snackbar_text);
+            snackyTextView.setMaxLines(3);
+            snacky.setAction(R.string.makeSettingsButton, new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent i = new Intent(List.this, SettingsActivity.class);
+                    startActivity(i);
+                }
+            }).show();
+        }else{
+            int issueCount = downloadFile();
+            if (issueCount == 0){
+                Snackbar snacky = Snackbar.make(findViewById(R.id.ListContainer), R.string.nothingFoundCheckSettings,
+                        Snackbar.LENGTH_INDEFINITE);
+                View snackyView = snacky.getView();
+                TextView snackyTextView = (TextView) snackyView.findViewById(android.support.design.R.id.snackbar_text);
+                snackyTextView.setMaxLines(3);
+                snacky.setAction(R.string.makeSettingsButton, new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent i = new Intent(List.this, SettingsActivity.class);
+                        startActivity(i);
+                    }
+                }).show();
+            }
+        }
     }
-
 
     @Override
     public  void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list);
-
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-        //System.out.println("Current array list is:"+timeEntryIds);
-
-
-
-
         int SDK_INT = android.os.Build.VERSION.SDK_INT;
         if (SDK_INT > 8)
         {
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
                     .permitAll().build();
             StrictMode.setThreadPolicy(policy);
-            //your codes here
-
         }
-
-
-
-
-
-
-
-
-
-        downloadFile();
-
-
-        button = findViewById(R.id.pauseButton);
-
-        button.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View arg0) {
-                timerHandler.removeCallbacks(updateTimerThread);
-                timerHandler.postDelayed(updateTimerThread, 5000);
-
-            }
-        });
+        FloatingActionButton pauseButton = findViewById(R.id.pauseButton);
     }
 
-
-    public boolean downloadFile()
+    public int downloadFile()
     {
-
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         DocumentBuilder db = null;
         LinearLayout layoutWrapper = (LinearLayout) findViewById(R.id.linearMain);
         if(((LinearLayout) layoutWrapper).getChildCount() > 0)
             ((LinearLayout) layoutWrapper).removeAllViews();
-
+        int issueCount = 0;
         for(int offset=0; offset<=5; offset++) {
             String path = "https://"+companyName+".easyredmine.com/issues.xml?key="+apiKey+"&sort=updated_on:desc&offset="+(offset * 50)+"&limit=50&page=&sort=priority:desc";
             try {
@@ -172,7 +169,6 @@ public class List extends AppCompatActivity {
                             if (el.getNodeName().contains("issue")) {
                                 final String issueId = el.getElementsByTagName("id").item(0).getTextContent();
                                 String issueSubject = el.getElementsByTagName("subject").item(0).getTextContent();
-
                                 NodeList issueAssignedTo = el.getElementsByTagName("assigned_to");
                                 String issueAssignedToId;
                                 if (issueAssignedTo.getLength() > 0) {
@@ -182,7 +178,7 @@ public class List extends AppCompatActivity {
                                 }
                                 if (issueAssignedToId.equals(userId)) {
 
-
+                                    issueCount++;
                                     // ------------
 
                                     LinearLayout issueRow = new LinearLayout(this);
@@ -204,6 +200,7 @@ public class List extends AppCompatActivity {
                                     final Button issueButtonTrack = new Button(this);
                                     issueButtonTrack.setId(Integer.parseInt(issueId));
                                     issueButtonTrack.setOnClickListener(new View.OnClickListener() {
+                                        @RequiresApi(api = Build.VERSION_CODES.KITKAT)
                                         @Override
                                         public void onClick(View v) {
                                             try {
@@ -225,6 +222,7 @@ public class List extends AppCompatActivity {
                                     issueButtonName.setGravity(Gravity.LEFT);
 
                                     issueButtonName.setOnClickListener(new View.OnClickListener() {
+                                        @RequiresApi(api = Build.VERSION_CODES.KITKAT)
                                         @Override
                                         public void onClick(View v) {
                                             try {
@@ -251,55 +249,47 @@ public class List extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
-        return true;
+        return issueCount;
     }
-    public boolean countIssueTime(final Button clickedButtonTrack) throws SAXException {
-
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    public String countIssueTime(final Button clickedButtonTrack) throws SAXException {
+        Integer lastIssueId = 0;
+        Integer newIssueId = clickedButtonTrack.getId();
         if (currentIssueButtonTrack != null){
-            Integer lastIssueId = currentIssueButtonTrack.getId();
+            lastIssueId = currentIssueButtonTrack.getId();
             String lastTimeString = currentIssueButtonTrack.getText().toString();
             String[] lastTimeParts=lastTimeString.split(":");
             int lastTimeHours=Integer.parseInt(lastTimeParts[0]);
             int lastTimeMinutes=Integer.parseInt(lastTimeParts[1]);
             int lastTimeSeconds=Integer.parseInt(lastTimeParts[2]);
             int lastTime = (lastTimeSeconds + (60 * lastTimeMinutes) + (3600 * lastTimeHours));
-
             if (lastTime > 60){
                 BigDecimal lastTimeDec = new BigDecimal(lastTime);
                 BigDecimal divideBy =  new BigDecimal(100);
                 BigDecimal lastHours = lastTimeDec.divide(BigDecimal.valueOf(3600), 5, RoundingMode.HALF_UP);
-
-                Log.i("Stunden", lastHours.toString());
-
                 try {
                     if (timeEntryIds.containsKey(lastIssueId)){
-                        Log.i("Test GEFUNDEN?!:", timeEntryIds.get(lastIssueId).toString());
                         int timeEntryId = timeEntryIds.get(lastIssueId);
                         updateTimeRecord(timeEntryId, lastHours.toString());
-                        Toast.makeText(getApplicationContext(), "Zeieintrag "+timeEntryId + " aktualisiert!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.updatedTimeEntry)+":  "+timeEntryId, Toast.LENGTH_SHORT).show();
 
                     }else{
                         int timeEntryId = createTimeRecord(lastIssueId, lastHours.toString());
                         if (timeEntryId != 0){
-                            Toast.makeText(getApplicationContext(), "Zeieintrag "+timeEntryId + " erstellt!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.createdTimeEntry)+": "+timeEntryId, Toast.LENGTH_SHORT).show();
                             timeEntryIds.put(lastIssueId, timeEntryId);
-                            Log.i("Zeiteintrag 2", String.valueOf(timeEntryId));
                         }else{
-                            Toast.makeText(getApplicationContext(), "Zeieintrag konnte nicht erstellt werden!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.couldNotCreate), Toast.LENGTH_SHORT).show();
                         }
-
                     }
-                    //button.setText(button.getText() + String.valueOf(timeEntryId));
-
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }else{
-                Toast.makeText(getApplicationContext(), "Zeit muss mindesten 1min sein, um getrackt zu werden.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.notMinTime), Toast.LENGTH_SHORT).show();
             }
             currentIssueButtonTrack.setBackgroundColor(0x00000000);
         }
-
         String currentTimeString = clickedButtonTrack.getText().toString();
         if (currentTimeString != ""){
             String[] currentTimeParts=currentTimeString.split(":");
@@ -311,14 +301,22 @@ public class List extends AppCompatActivity {
         }else{
             currentTime = 0;
         }
-
         String currentHours = Integer.toString(currentTime / 60 / 60);
-
         currentIssueButtonTrack = clickedButtonTrack;
         currentIssueButtonTrack.setBackgroundColor(Color.parseColor("#82b91e"));
         startTime = SystemClock.uptimeMillis();
-        timerHandler.postDelayed(updateTimerThread, 0);
-        return true;
+        if (Objects.equals(newIssueId, lastIssueId) && timerIsRunning){
+            Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.trackingStopped), Toast.LENGTH_SHORT).show();
+            timerHandler.removeCallbacks(updateTimerThread);
+            timerHandler.postDelayed(updateTimerThread, 1);
+            timerIsRunning = false;
+
+            return "stopped";
+        }else{
+            timerIsRunning = true;
+            timerHandler.postDelayed(updateTimerThread, 0);
+        }
+        return "saved";
     }
 
     public int createTimeRecord(Integer currentIssueId, String currentHours) throws IOException, SAXException {
@@ -349,13 +347,11 @@ public class List extends AppCompatActivity {
         System.out.print("ANTWORT: "+br);
         String response = new String();
         for (String line; (line = br.readLine()) != null; response += line);
-        Log.i("Antworten vom Erstellen", response);
         br.close();
         conn.disconnect();
         return getTimeEntryIdFromXml(response);
     }
     public int updateTimeRecord(Integer timeEntryId, String currentHours) throws IOException, SAXException {
-        Log.i("URL", "https://"+companyName+".easyredmine.com/time_entries/"+timeEntryId+".xml?key="+apiKey);
         URL url = new URL("https://"+companyName+".easyredmine.com/time_entries/"+timeEntryId+".xml?key="+apiKey);
         String body = "<time_entry><comments>updated time entry comment</comments></time_entry>";
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -402,9 +398,6 @@ public class List extends AppCompatActivity {
         }else{
             return 0;
         }
-
-        //Log.i("Zeiteintrag", String.valueOf(timeEntry));
-
     }
 
     int currentTime;
@@ -414,7 +407,7 @@ public class List extends AppCompatActivity {
     long timeSwapBuff = 0L;
     private Button currentIssueButtonTrack;
     final Handler timerHandler = new Handler();
-    boolean isPaused = true;
+    boolean timerIsRunning = false;
 
     private Runnable updateTimerThread = new Runnable() {
 
@@ -428,8 +421,9 @@ public class List extends AppCompatActivity {
             currentIssueButtonTrack.setText("" + hours + ":"
                     + "" + mins + ":"
                     + String.format("%02d", secs));
-            timerHandler.postDelayed(this, 0);
+            if (timerIsRunning){
+                timerHandler.postDelayed(this, 0);
+            }
         }
     };
-
 }

@@ -17,4 +17,17 @@
     <string name="pref_title_userid_text">User-ID</string>
     <string name="pref_summary_userid_text">ID Ihres EasyRedmine-Zugangs</string>
     <string name="pref_default_userid_text"></string>
+
+    <string name="makeSettingsFirst">Bevor Sie diese App nutzen können, sind noch ein paar Einstellungen zu machen</string>
+    <string name="makeSettingsButton">Einstellen</string>
+
+    <string name="nothingFoundCheckSettings">Keine Einträge gefunden, bitte überprüfen Sie Ihre Einstellungen.</string>
+
+    <string name="trackingStopped">Tracking angehalten.</string>
+
+    <string name="notMinTime">Zeit muss mindestens 1 Minute betragen!</string>
+
+    <string name="couldNotCreate">Zeieintrag konnte nicht erstellt werden!</string>
+    <string name="createdTimeEntry">Zeiteintrag erstellt</string>
+    <string name="updatedTimeEntry">Zeiteintrag aktualisiert</string>
 </resources>
