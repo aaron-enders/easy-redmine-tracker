@@ -1,33 +1,31 @@
 <resources>
     <string name="app_name">Easy Redmine Tracker</string>
 
-    <string name="companyName">Unternehmen</string>
-
-
+    <string name="companyName">Company</string>
     <string name="action_settings">Settings</string>
-    <string name="pref_title_companyname_text">Unternehmen</string>
-    <string name="pref_summary_companyname_text">EasyRedmine-Name Ihres Unternehmens</string>
+    <string name="pref_title_companyname_text">Company</string>
+    <string name="pref_summary_companyname_text">EasyRedmine-name of your company</string>
     <string name="pref_default_companyname_text"></string>
 
 
     <string name="pref_title_apikey_text">API-Key</string>
-    <string name="pref_summary_apikey_text">Ihr API-Key</string>
+    <string name="pref_summary_apikey_text">Your API key</string>
     <string name="pref_default_apikey_text"></string>
 
     <string name="pref_title_userid_text">User-ID</string>
-    <string name="pref_summary_userid_text">ID Ihres EasyRedmine-Zugangs</string>
+    <string name="pref_summary_userid_text">ID of your EasyRedmine account</string>
     <string name="pref_default_userid_text"></string>
 
-    <string name="makeSettingsFirst">Bevor Sie diese App nutzen können, sind noch ein paar Einstellungen zu machen</string>
-    <string name="makeSettingsButton">Einstellen</string>
+    <string name="makeSettingsFirst">Before you can use this app, you have to set up some configuration</string>
+    <string name="makeSettingsButton">set up</string>
 
-    <string name="nothingFoundCheckSettings">Keine Einträge gefunden, bitte überprüfen Sie Ihre Einstellungen.</string>
+    <string name="nothingFoundCheckSettings">No entries found, please check your configuration.</string>
 
-    <string name="trackingStopped">Tracking angehalten.</string>
+    <string name="trackingStopped">Tracking stopped</string>
 
-    <string name="notMinTime">Zeit muss mindestens 1 Minute betragen!</string>
+    <string name="notMinTime">Time must be at least 1 minute!</string>
 
-    <string name="couldNotCreate">Zeieintrag konnte nicht erstellt werden!</string>
-    <string name="createdTimeEntry">Zeiteintrag erstellt</string>
-    <string name="updatedTimeEntry">Zeiteintrag aktualisiert</string>
+    <string name="couldNotCreate">Time entry could not be created!</string>
+    <string name="createdTimeEntry">Created time entry</string>
+    <string name="updatedTimeEntry">Updated time entry</string>
 </resources>

@@ -1,25 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory android:title="EasyRedmine-Einstellungen">
-
-        <EditTextPreference
-            android:key="companyName"
-            android:title="@string/pref_title_companyname_text"
-            android:summary="@string/pref_summary_companyname_text"
-            android:defaultValue="@string/pref_default_companyname_text" />
-
-        <EditTextPreference
-            android:key="apiKey"
-            android:title="@string/pref_title_apikey_text"
-            android:summary="@string/pref_summary_apikey_text"
-            android:defaultValue="@string/pref_default_apikey_text" />
-
-        <EditTextPreference
-            android:key="userId"
-            android:title="@string/pref_title_userid_text"
-            android:summary="@string/pref_summary_userid_text"
-            android:defaultValue="@string/pref_default_userid_text" />
-
-    </PreferenceCategory>
+    <EditTextPreference
+        android:defaultValue="@string/pref_default_companyname_text"
+        android:key="companyName"
+        android:summary="@string/pref_summary_companyname_text"
+        android:title="@string/pref_title_companyname_text" />
+    <EditTextPreference
+        android:defaultValue="@string/pref_default_apikey_text"
+        android:key="apiKey"
+        android:summary="@string/pref_summary_apikey_text"
+        android:title="@string/pref_title_apikey_text" />
+    <EditTextPreference
+        android:defaultValue="@string/pref_default_userid_text"
+        android:key="userId"
+        android:inputType="number"
+        android:summary="@string/pref_summary_userid_text"
+        android:title="@string/pref_title_userid_text" />
 </PreferenceScreen>
