@@ -115,8 +115,7 @@ public class List extends AppCompatActivity {
                     startActivity(i);
                 }
             }).show();
-            Intent i = new Intent(List.this, LoginActivity.class);
-            startActivity(i);
+
         }else{
             int issueCount = downloadFile();
             if (issueCount == 0){
@@ -162,7 +161,18 @@ public class List extends AppCompatActivity {
         setContentView(R.layout.activity_list);
 
 
-
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String defaultCompanyName = getResources().getString(R.string.pref_default_companyname_text);
+        companyName = preferences.getString("companyName", defaultCompanyName);
+        String defaultApiKey = getResources().getString(R.string.pref_default_apikey_text);
+        apiKey = preferences.getString("apiKey", defaultApiKey);
+        String defaultUserId = getResources().getString(R.string.pref_default_userid_text);
+        userId = preferences.getString("userId", defaultUserId);
+        if((!preferences.contains("companyName")) || (!preferences.contains("apiKey")) || (!preferences.contains("userId")
+                || companyName.isEmpty() ||  apiKey.isEmpty() || userId.isEmpty())){
+            Intent i = new Intent(List.this, LoginActivity.class);
+            startActivity(i);
+        }
 
 
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);

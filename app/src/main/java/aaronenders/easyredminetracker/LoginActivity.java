@@ -3,21 +3,21 @@ package aaronenders.easyredminetracker;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.content.pm.PackageManager;
-import android.support.annotation.NonNull;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
 import android.app.LoaderManager.LoaderCallbacks;
-
 import android.content.CursorLoader;
+import android.content.Intent;
 import android.content.Loader;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
-
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.annotation.NonNull;
+import android.support.design.widget.Snackbar;
+import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -29,10 +29,24 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
@@ -164,12 +178,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         boolean cancel = false;
         View focusView = null;
 
-        // Check for a valid password, if the user entered one.
-        if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
-            mPasswordView.setError(getString(R.string.error_invalid_password));
-            focusView = mPasswordView;
-            cancel = true;
-        }
 
         if (TextUtils.isEmpty(password)) {
             mUsernameView.setError(getString(R.string.error_field_required));
@@ -195,21 +203,12 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         } else {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
-            showProgress(true);
+            //showProgress(true);
             mAuthTask = new UserLoginTask(username, password, company);
             mAuthTask.execute((Void) null);
         }
     }
 
-    private boolean isEmailValid(String username) {
-        //TODO: Replace this with your own logic
-        return username.contains("@");
-    }
-
-    private boolean isPasswordValid(String password) {
-        //TODO: Replace this with your own logic
-        return password.length() > 4;
-    }
 
     /**
      * Shows the progress UI and hides the login form.
@@ -310,6 +309,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         private final String mUsername;
         private final String mPassword;
         private final String mCompany;
+        public String apiKey;
+        SharedPreferences.Editor editor;
+        SharedPreferences pref;
 
         UserLoginTask(String username, String password, String company) {
             mUsername = username;
@@ -319,35 +321,71 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         @Override
         protected Boolean doInBackground(Void... params) {
+
             // TODO: attempt authentication against a network service.
             Log.i("Loggin is", "yes");
             try {
                 // Simulate network access.
                 Thread.sleep(2000);
-                Log.i("Daten", "das hier:" +mCompany+mUsername+mPassword);
-            } catch (InterruptedException e) {
-                return false;
-            }
+                Log.i("Daten", "das hier:" + mCompany + mUsername + mPassword);
 
-            for (String credential : DUMMY_CREDENTIALS) {
-                String[] pieces = credential.split(":");
-                if (pieces[0].equals(mUsername)) {
-                    // Account exists, return true if the password matches.
-                    return pieces[1].equals(mPassword);
+                DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+                DocumentBuilder db = null;
+                String path = "https://" + mCompany + ".easyredmine.com/issues.xml/users.xml?set_filter=1&login=" + mUsername;
+
+
+
+
+                Authenticator.setDefault (new Authenticator() {
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication (mUsername, mPassword.toCharArray());
+                    }
+                });
+
+                InputStream xml = new URL(path).openStream();
+                String response = new Scanner(xml, "UTF-8").useDelimiter("\\A").next();
+                Log.i("DEBUG: APIKEY: ", "test"+response);
+                Document dom = db.parse(xml);
+                Node users = dom.getElementsByTagName("users").item(0);
+                NodeList usersNodeList = users.getChildNodes();
+                Element user = (Element) usersNodeList.item(0);
+                String apiKey = user.getElementsByTagName("api_key").item(0).getTextContent();
+
+
+
+                if (apiKey != null && apiKey != ""){
+                    String userId = user.getElementsByTagName("id").item(0).getTextContent();
+                    editor.putString("companyName", mCompany);
+                    editor.putString("apiKey", apiKey);
+                    editor.putString("userId", userId);
+
+                    return true;
+                }else{
+                    return false;
                 }
-            }
 
-            // TODO: register the new account here.
-            return true;
+
+
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (SAXException e) {
+                e.printStackTrace();
+            }
+            return false;
         }
 
-        @Override
+            @Override
         protected void onPostExecute(final Boolean success) {
             mAuthTask = null;
             showProgress(false);
 
             if (success) {
                 finish();
+                Intent i = new Intent(LoginActivity.this, aaronenders.easyredminetracker.List.class);
+                startActivity(i);
             } else {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
                 mPasswordView.requestFocus();
