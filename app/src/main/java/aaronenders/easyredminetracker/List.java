@@ -115,6 +115,8 @@ public class List extends AppCompatActivity {
                     startActivity(i);
                 }
             }).show();
+            Intent i = new Intent(List.this, LoginActivity.class);
+            startActivity(i);
         }else{
             int issueCount = downloadFile();
             if (issueCount == 0){

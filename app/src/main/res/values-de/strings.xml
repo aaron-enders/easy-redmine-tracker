@@ -17,4 +17,14 @@
     <string name="couldNotCreate">Zeieintrag konnte nicht erstellt werden!</string>
     <string name="createdTimeEntry">Zeiteintrag erstellt</string>
     <string name="updatedTimeEntry">Zeiteintrag aktualisiert</string>
+    <string name="title_activity_login">Anmelden</string>
+    <string name="prompt_password">Passwort</string>
+    <string name="action_sign_in">Anmelden</string>
+    <string name="action_sign_in_short">Anmelden</string>
+    <string name="error_invalid_email">Die Email-Adresse ist ungültig</string>
+    <string name="error_invalid_password">Das Passwort ist zu kurz</string>
+    <string name="error_incorrect_password">Das Passwort ist falsch</string>
+    <string name="error_field_required">Dies ist ein Pflichtfeld</string>
+    <string name="prompt_company">Unternehmen  (******.easyredmine.com)</string>
+    <string name="prompt_username">Benutzername</string>
 </resources>
