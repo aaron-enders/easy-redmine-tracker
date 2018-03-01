@@ -310,8 +310,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         private final String mPassword;
         private final String mCompany;
         public String apiKey;
-        SharedPreferences.Editor editor;
-        SharedPreferences pref;
+
 
         UserLoginTask(String username, String password, String company) {
             mUsername = username;
@@ -324,60 +323,77 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
             // TODO: attempt authentication against a network service.
             Log.i("Loggin is", "yes");
-            try {
                 // Simulate network access.
-                Thread.sleep(2000);
-                Log.i("Daten", "das hier:" + mCompany + mUsername + mPassword);
+                //Thread.sleep(2000);
 
-                DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-                DocumentBuilder db = null;
-                String path = "https://" + mCompany + ".easyredmine.com/issues.xml/users.xml?set_filter=1&login=" + mUsername;
+                return login(mCompany, mUsername, mPassword);
 
-
-
-
-                Authenticator.setDefault (new Authenticator() {
-                    protected PasswordAuthentication getPasswordAuthentication() {
-                        return new PasswordAuthentication (mUsername, mPassword.toCharArray());
-                    }
-                });
-
-                InputStream xml = new URL(path).openStream();
-                String response = new Scanner(xml, "UTF-8").useDelimiter("\\A").next();
-                Log.i("DEBUG: APIKEY: ", "test"+response);
-                Document dom = db.parse(xml);
-                Node users = dom.getElementsByTagName("users").item(0);
-                NodeList usersNodeList = users.getChildNodes();
-                Element user = (Element) usersNodeList.item(0);
-                String apiKey = user.getElementsByTagName("api_key").item(0).getTextContent();
-
-
-
-                if (apiKey != null && apiKey != ""){
-                    String userId = user.getElementsByTagName("id").item(0).getTextContent();
-                    editor.putString("companyName", mCompany);
-                    editor.putString("apiKey", apiKey);
-                    editor.putString("userId", userId);
-
-                    return true;
-                }else{
-                    return false;
-                }
-
-
-
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (SAXException e) {
-                e.printStackTrace();
-            }
-            return false;
         }
 
-            @Override
+        public  boolean login(final String mCompany, final String mUsername, final String mPassword){
+            SharedPreferences.Editor editor = null;
+            SharedPreferences pref;
+            Log.i("Daten", "das hier:" + mCompany + mUsername + mPassword);
+
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = null;
+
+
+
+
+
+            Authenticator.setDefault (new Authenticator() {
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication (mUsername, mPassword.toCharArray());
+                }
+            });
+            String path = "https://" + mCompany + ".easyredmine.com/users.xml?set_filter=1&login=" + mUsername;
+
+            InputStream xml;
+
+            try
+            {
+                xml = new URL(path).openStream();
+            }catch (Exception e) {
+                e.printStackTrace();
+                Log.i("FEHLER: ", "Company nicht gefunden!");
+                return false;
+            }
+            String response = new Scanner(xml, "UTF-8").useDelimiter("\\A").next();
+            Log.i("DEBUG: APIKEY: ", "test"+response);
+            Document dom = null;
+            try {
+                dom = db.parse(xml);
+            } catch (SAXException e) {
+                Log.i("FEHLER: ", "XML konnte nicht geladen werden.");
+                e.printStackTrace();
+                return false;
+            } catch (IOException e) {
+                Log.i("FEHLER: ", "XML konnte nicht geladen werden.");
+                e.printStackTrace();
+                return false;
+            }
+            Node users = dom.getElementsByTagName("users").item(0);
+            NodeList usersNodeList = users.getChildNodes();
+            Element user = (Element) usersNodeList.item(0);
+            String apiKey = user.getElementsByTagName("api_key").item(0).getTextContent();
+
+
+
+            if (apiKey != null && apiKey != ""){
+                String userId = user.getElementsByTagName("id").item(0).getTextContent();
+                editor.putString("companyName", mCompany);
+                editor.putString("apiKey", apiKey);
+                editor.putString("userId", userId);
+
+                return true;
+            }else{
+                return false;
+            }
+        }
+
+
+        @Override
         protected void onPostExecute(final Boolean success) {
             mAuthTask = null;
             showProgress(false);
@@ -398,5 +414,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             showProgress(false);
         }
     }
+
 }
 

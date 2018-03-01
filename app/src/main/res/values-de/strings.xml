@@ -27,4 +27,5 @@
     <string name="error_field_required">Dies ist ein Pflichtfeld</string>
     <string name="prompt_company">Unternehmen  (******.easyredmine.com)</string>
     <string name="prompt_username">Benutzername</string>
+    <string name="error_incorrect_company">Unternehmen konnte nicht gefunden werden</string>
 </resources>

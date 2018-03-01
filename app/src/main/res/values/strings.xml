@@ -43,4 +43,5 @@
         completions."
     </string>
     <string name="prompt_company">Company (******.easyredmine.com)</string>
+    <string name="error_incorrect_company">Company can't be found.</string>
 </resources>
