@@ -14,6 +14,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -88,6 +89,17 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         populateAutoComplete();
         mCompanyView = (EditText) findViewById(R.id.company);
         mPasswordView = (EditText) findViewById(R.id.password);
+
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String defaultCompanyName = getResources().getString(R.string.pref_default_companyname_text);
+        String companyName = preferences.getString("companyName", defaultCompanyName);
+        String defaultUsername = "";
+        String username = preferences.getString("username", defaultUsername);
+
+        mCompanyView.setText(companyName);
+        mUsernameView.setText(username);
+
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
@@ -205,8 +217,17 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             // perform the user login attempt.
             //showProgress(true);
             mAuthTask = new UserLoginTask(username, password, company);
+            saveUserData(username, password, company);
             mAuthTask.execute((Void) null);
         }
+    }
+    private void saveUserData(String username, String password, String company){
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putString("companyName", company);
+        editor.putString("username", username);
+        Log.i("Gespeichert:", username+", "+ company);
+        editor.apply();
     }
 
 
@@ -331,14 +352,14 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         }
 
         public  boolean login(final String mCompany, final String mUsername, final String mPassword){
-            SharedPreferences.Editor editor = null;
-            SharedPreferences pref;
+
             Log.i("Daten", "das hier:" + mCompany + mUsername + mPassword);
 
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = null;
 
-
+            SharedPreferences.Editor editor = null;
+            SharedPreferences pref;
 
 
 
@@ -382,7 +403,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
             if (apiKey != null && apiKey != ""){
                 String userId = user.getElementsByTagName("id").item(0).getTextContent();
-                editor.putString("companyName", mCompany);
+
                 editor.putString("apiKey", apiKey);
                 editor.putString("userId", userId);
 
