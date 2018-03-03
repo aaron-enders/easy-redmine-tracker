@@ -52,4 +52,5 @@
     <string name="pref_summary_password_text">Your login password</string>
     <string name="action_login">Login</string>
     <string name="action_logout">Logout</string>
+    <string name="couldNotupdateTimeEntry">Time entry could not be updated!</string>
 </resources>

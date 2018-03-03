@@ -30,20 +30,10 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.HttpURLConnection;
@@ -51,10 +41,6 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 public class List extends AppCompatActivity {
     private ImageButton button;
@@ -66,7 +52,8 @@ public class List extends AppCompatActivity {
     public String userId;
     public String avatar = "https://www.easyredmine.com/images/stories/easy_logo.png";
     public String userName = "";
-
+    Api Api = new Api();
+    String[][] issues = new String[25][4];
     final Map <Integer, Integer> timeEntryIds = new HashMap<Integer, Integer>();
 
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -90,9 +77,6 @@ public class List extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-
-
-
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         String defaultCompanyName = getResources().getString(R.string.pref_default_companyname_text);
         companyName = preferences.getString("companyName", defaultCompanyName);
@@ -116,8 +100,11 @@ public class List extends AppCompatActivity {
             }).show();
 
         }else{
-            int issueCount = downloadFile();
-            if (issueCount == 0){
+            String[] userInfos = Api.getUserInfos(companyName, userId, apiKey);
+            setAvatarAndName(userInfos[1], userInfos[0]);
+
+            issues = Api.getIssues(companyName, apiKey, userId);
+            if (issues.length == 0){
                 Snackbar snacky = Snackbar.make(findViewById(R.id.ListContainer), R.string.nothingFoundCheckSettings,
                         Snackbar.LENGTH_INDEFINITE);
                 View snackyView = snacky.getView();
@@ -130,7 +117,89 @@ public class List extends AppCompatActivity {
                         startActivity(i);
                     }
                 }).show();
+            }else{
+                addIssueButtons(issues);
             }
+        }
+    }
+
+
+
+    public void addIssueButtons(String[][] issues){
+        LinearLayout layoutWrapper = (LinearLayout) findViewById(R.id.linearMain);
+        if(((LinearLayout) layoutWrapper).getChildCount() > 0)
+            ((LinearLayout) layoutWrapper).removeAllViews();
+        for (String[] issue : issues) {
+            if (issue[0] != null) {
+                String issueTimeEntryHours = "";
+                Integer issueId = Integer.parseInt(issue[0]);
+                String issueSubject = issue[1];
+                if (issue[2] != null){
+                    Integer issueTimeEntryId = Integer.parseInt(issue[2]);
+                    issueTimeEntryHours = issue[3];
+
+                    timeEntryIds.put(issueId, issueTimeEntryId);
+                }
+
+
+                LinearLayout issueRow = new LinearLayout(this);
+                issueRow.setBackgroundColor(Color.parseColor("#ffffff"));
+                issueRow.setOrientation(LinearLayout.HORIZONTAL);
+                issueRow.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+                LinearLayout.LayoutParams issueRowParams = (LinearLayout.LayoutParams) issueRow.getLayoutParams();
+                issueRowParams.setMargins(0, 2, 0, 0);
+                layoutWrapper.addView(issueRow);
+
+                // --------------
+
+                DisplayMetrics dm = new DisplayMetrics();
+                this.getWindow().getWindowManager().getDefaultDisplay().getMetrics(dm);
+                int width = dm.widthPixels;
+
+                // -----------------
+
+                final Button issueButtonTrack = new Button(this);
+                issueButtonTrack.setId(issueId);
+                issueButtonTrack.setOnClickListener(new View.OnClickListener() {
+                    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+                    @Override
+                    public void onClick(View v) {
+                        try {
+                            countIssueTime(issueButtonTrack);
+                        } catch (SAXException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+                //LinearLayout.LayoutParams forButtonParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                issueButtonTrack.setBackgroundColor(0x00000000);
+                issueButtonTrack.setText(issueTimeEntryHours);
+                issueRow.addView(issueButtonTrack);
+                issueButtonTrack.getLayoutParams().width = (width / 100) * 20;
+
+                // --------------
+
+                final Button issueButtonName = new Button(this);
+                issueButtonName.setGravity(Gravity.LEFT);
+
+                issueButtonName.setOnClickListener(new View.OnClickListener() {
+                    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+                    @Override
+                    public void onClick(View v) {
+                        try {
+                            countIssueTime(issueButtonTrack);
+                        } catch (SAXException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+                issueButtonName.setGravity(Gravity.CENTER);
+                issueButtonName.setBackgroundColor(0x00000000);
+                issueButtonName.setText(issueSubject);
+                issueRow.addView(issueButtonName);
+                issueButtonName.getLayoutParams().width = (width / 100) * 70;
+            }
+
         }
     }
 
@@ -185,144 +254,18 @@ public class List extends AppCompatActivity {
         FloatingActionButton pauseButton = findViewById(R.id.pauseButton);
     }
 
-    public int downloadFile()
-    {
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        DocumentBuilder db = null;
-        LinearLayout layoutWrapper = (LinearLayout) findViewById(R.id.linearMain);
-        if(((LinearLayout) layoutWrapper).getChildCount() > 0)
-            ((LinearLayout) layoutWrapper).removeAllViews();
-        int issueCount = 0;
-        for(int offset=0; offset<=1; offset++) {
-            String path = "https://"+companyName+".easyredmine.com/issues.xml?key="+apiKey+"&offset="+(offset * 50)+"&limit=50&page=&sort=closed_on&set_filter=1&assigned_to_id="+userId;
-            try {
-                db = dbf.newDocumentBuilder();
-            } catch (ParserConfigurationException e) {
-                e.printStackTrace();
-            }
-            try {
-                InputStream xml = new URL(path).openStream();
-                Document dom = db.parse(xml);
-                //Element docEle = dom.getDocumentElement();
-                Node projects = dom.getElementsByTagName("issues").item(0);
-                NodeList nl = projects.getChildNodes();
-                if (nl != null) {
-                    int length = nl.getLength();
-                    for (int i = 0; i < length; i++) {
-                        if (nl.item(i).getNodeType() == Node.ELEMENT_NODE) {
-                            Element el = (Element) nl.item(i);
-                            if (el.getNodeName().contains("issue")) {
-                                String issueClosedOn = el.getElementsByTagName("closed_on").item(0).getTextContent();
-                                if ("" == issueClosedOn){
-                                    final String issueId = el.getElementsByTagName("id").item(0).getTextContent();
-
-                                    String issueSubject = el.getElementsByTagName("subject").item(0).getTextContent();
-                                    NodeList issueAssignedTo = el.getElementsByTagName("assigned_to");
-                                    String issueAssignedToId;
-                                    String issueAssignedToAvatar;
-                                    if (issueAssignedTo.getLength() > 0) {
-                                        issueAssignedToId = issueAssignedTo.item(0).getAttributes().getNamedItem("id").getNodeValue();
-
-                                        issueAssignedToAvatar = issueAssignedTo.item(0).getAttributes().getNamedItem("avatar_urls").getNodeValue();
-                                        userName = issueAssignedTo.item(0).getAttributes().getNamedItem("name").getNodeValue();
-                                        if (issueAssignedToAvatar != ""){
-                                            avatar = "https://bluehouse.easyredmine.com"+issueAssignedToAvatar.substring(issueAssignedToAvatar.indexOf(":large=>\"") + 9, issueAssignedToAvatar.indexOf("\", :medium"));
-                                        }
-
-
-                                    } else {
-                                        issueAssignedToId = "-";
-                                    }
-                                    if (issueAssignedToId.equals(userId)) {
-
-                                        issueCount++;
-                                        LinearLayout issueRow = new LinearLayout(this);
-                                        issueRow.setBackgroundColor(Color.parseColor("#ffffff"));
-                                        issueRow.setOrientation(LinearLayout.HORIZONTAL);
-                                        issueRow.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-                                        LinearLayout.LayoutParams issueRowParams = (LinearLayout.LayoutParams) issueRow.getLayoutParams();
-                                        issueRowParams.setMargins(0, 2, 0, 0);
-                                        layoutWrapper.addView(issueRow);
-
-                                        // --------------
-
-                                        DisplayMetrics dm = new DisplayMetrics();
-                                        this.getWindow().getWindowManager().getDefaultDisplay().getMetrics(dm);
-                                        int width = dm.widthPixels;
-
-                                        // -----------------
-
-                                        final Button issueButtonTrack = new Button(this);
-                                        issueButtonTrack.setId(Integer.parseInt(issueId));
-                                        issueButtonTrack.setOnClickListener(new View.OnClickListener() {
-                                            @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-                                            @Override
-                                            public void onClick(View v) {
-                                                try {
-                                                    countIssueTime(issueButtonTrack);
-                                                } catch (SAXException e) {
-                                                    e.printStackTrace();
-                                                }
-                                            }
-                                        });
-                                        //LinearLayout.LayoutParams forButtonParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                                        issueButtonTrack.setBackgroundColor(0x00000000);
-                                        issueButtonTrack.setText("");
-                                        issueRow.addView(issueButtonTrack);
-                                        issueButtonTrack.getLayoutParams().width = (width / 100) * 20;
-
-                                        // --------------
-
-                                        final Button issueButtonName = new Button(this);
-                                        issueButtonName.setGravity(Gravity.LEFT);
-
-                                        issueButtonName.setOnClickListener(new View.OnClickListener() {
-                                            @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-                                            @Override
-                                            public void onClick(View v) {
-                                                try {
-                                                    countIssueTime(issueButtonTrack);
-                                                } catch (SAXException e) {
-                                                    e.printStackTrace();
-                                                }
-                                            }
-                                        });
-                                        issueButtonName.setGravity(Gravity.CENTER);
-                                        issueButtonName.setBackgroundColor(0x00000000);
-                                        issueButtonName.setText(issueSubject);
-                                        issueRow.addView(issueButtonName);
-                                        issueButtonName.getLayoutParams().width = (width / 100) * 70;
-                                    }
-                                }else{
-                                    xml.close();
-                                    setAvatarAndName();
-                                    return issueCount;
-                                }
-
-                            }
-                        }
-                    }
-                }
-
-            } catch (SAXException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+    public boolean setAvatarAndName(String avatar, String name){
+        if (avatar != null){
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+            Drawable avatarDrawable = LoadImageFromWebOperations(avatar);
+            getSupportActionBar().setIcon(avatarDrawable);
         }
-
-        setAvatarAndName();
-        return issueCount;
-    }
-    public boolean setAvatarAndName(){
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
-        Drawable avatarDrawable = LoadImageFromWebOperations(avatar);
-        getSupportActionBar().setIcon(avatarDrawable);
-        if (userName != ""){
-            setTitle(userName);
+        if (name != null){
+            setTitle(" "+name);
         }
         return true;
     }
+
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public String countIssueTime(final Button clickedButtonTrack) throws SAXException {
         Integer lastIssueId = 0;
@@ -342,11 +285,13 @@ public class List extends AppCompatActivity {
                 try {
                     if (timeEntryIds.containsKey(lastIssueId)){
                         int timeEntryId = timeEntryIds.get(lastIssueId);
-                        updateTimeRecord(timeEntryId, lastHours.toString());
-                        Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.updatedTimeEntry)+":  "+timeEntryId, Toast.LENGTH_SHORT).show();
-
+                        if (Api.updateTimeRecord(timeEntryId, lastHours.toString(), companyName, apiKey)){
+                            Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.updatedTimeEntry), Toast.LENGTH_SHORT).show();
+                        }else{
+                            Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.couldNotupdateTimeEntry), Toast.LENGTH_SHORT).show();
+                        }
                     }else{
-                        int timeEntryId = createTimeRecord(lastIssueId, lastHours.toString());
+                        int timeEntryId = Api.createTimeRecord(lastIssueId, lastHours.toString(), companyName, userId, apiKey);
                         if (timeEntryId != 0){
                             Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.createdTimeEntry)+": "+timeEntryId, Toast.LENGTH_SHORT).show();
                             timeEntryIds.put(lastIssueId, timeEntryId);
@@ -391,85 +336,7 @@ public class List extends AppCompatActivity {
         return "saved";
     }
 
-    public int createTimeRecord(Integer currentIssueId, String currentHours) throws IOException, SAXException {
-        URL url = new URL("https://"+companyName+".easyredmine.com/time_entries.xml?key="+apiKey);
-        String body = "<time_entry><issue_id>"+currentIssueId.toString()+"</issue_id><user_id>"+userId+"</user_id><activity_id>13</activity_id><hours>"+currentHours+"</hours><comments>EasyRedmine Time Tracker record</comments>  <spent_on>2018-02-10</spent_on></time_entry>";
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        try {
-            //conn.setReadTimeout(10000);
-            //conn.setConnectTimeout(15000);
-            conn.setRequestMethod("POST");
-            conn.setDoInput(true);
-            conn.setDoOutput(true);
-            conn.setRequestProperty("Accept", "application/xml");
-            conn.setRequestProperty("Content-Type", "application/xml");
-            OutputStream output = new BufferedOutputStream(conn.getOutputStream());
-            output.write(body.getBytes());
-            output.flush();
-            output.close();
-        }finally {
-            //conn.disconnect();
-        }
-        BufferedReader br;
-        if (200 <= conn.getResponseCode() && conn.getResponseCode() <= 299) {
-            br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-        } else {
-            br = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
-        }
-        System.out.print("ANTWORT: "+br);
-        String response = new String();
-        for (String line; (line = br.readLine()) != null; response += line);
-        br.close();
-        conn.disconnect();
-        return getTimeEntryIdFromXml(response);
-    }
-    public int updateTimeRecord(Integer timeEntryId, String currentHours) throws IOException, SAXException {
-        URL url = new URL("https://"+companyName+".easyredmine.com/time_entries/"+timeEntryId+".xml?key="+apiKey);
-        String body = "<time_entry><hours>"+currentHours+"</hours></time_entry>";
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        try {
-            conn.setRequestMethod("PUT");
-            conn.setDoInput(true);
-            conn.setDoOutput(true);
-            conn.setRequestProperty("Accept", "application/xml");
-            conn.setRequestProperty("Content-Type", "application/xml");
-            OutputStream output = new BufferedOutputStream(conn.getOutputStream());
-            output.write(body.getBytes());
-            output.flush();
-            output.close();
-        }finally {
-        }
-        BufferedReader br;
-        if (200 <= conn.getResponseCode() && conn.getResponseCode() <= 299) {
-            br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-        } else {
-            br = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
-        }
-        System.out.print("ANTWORT: "+br);
-        String response = new String();
-        for (String line; (line = br.readLine()) != null; response += line);
-        br.close();
-        conn.disconnect();
-        return timeEntryId;
-    }
 
-    public int getTimeEntryIdFromXml(String xml) throws IOException, SAXException {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = null;
-        try {
-            builder = factory.newDocumentBuilder();
-        } catch (ParserConfigurationException e) {
-            e.printStackTrace();
-        }
-        InputSource is = new InputSource(new StringReader(xml));
-        Document dom = builder.parse(is);
-        if (dom.getElementsByTagName("id").item(0) != null){
-            int timeEntry = Integer.parseInt(dom.getElementsByTagName("id").item(0).getTextContent());
-            return timeEntry;
-        }else{
-            return 0;
-        }
-    }
 
     int currentTime;
     long timeInMilliseconds = 0L;
