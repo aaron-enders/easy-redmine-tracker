@@ -216,6 +216,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         if (cancel) {
             focusView.requestFocus();
         } else {
+            showProgress(true);
             mAuthTask = new UserLoginTask(username, password, company);
             saveUserData(username, password, company);
             mAuthTask.execute((Void) null);
