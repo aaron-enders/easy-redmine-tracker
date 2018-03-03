@@ -44,4 +44,12 @@
     </string>
     <string name="prompt_company">Company (******.easyredmine.com)</string>
     <string name="error_incorrect_company">Company can't be found.</string>
+    <string name="pref_default_username_text" />
+    <string name="pref_default_password_text" />
+    <string name="pref_title_username_text">Username</string>
+    <string name="pref_title_password_text">Password</string>
+    <string name="pref_summary_username_text">Your login name</string>
+    <string name="pref_summary_password_text">Your login password</string>
+    <string name="action_login">Login</string>
+    <string name="action_logout">Logout</string>
 </resources>

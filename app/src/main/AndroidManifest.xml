@@ -33,7 +33,14 @@
         </activity>
         <activity
             android:name=".LoginActivity"
-            android:label="@string/title_activity_login"></activity>
+            android:parentActivityName=".List"
+            android:label="@string/title_activity_login">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".List" />
+
+
+        </activity>
     </application>
 
 </manifest>

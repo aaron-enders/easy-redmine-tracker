@@ -19,7 +19,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -78,8 +77,8 @@ public class List extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.settings) {
-            startActivity(new Intent(this, SettingsActivity.class));
+        if (id == R.id.login) {
+            startActivity(new Intent(this, LoginActivity.class));
         }
         if (id == R.id.home) {
             super.onBackPressed();
@@ -226,7 +225,6 @@ public class List extends AppCompatActivity {
 
                                         issueAssignedToAvatar = issueAssignedTo.item(0).getAttributes().getNamedItem("avatar_urls").getNodeValue();
                                         userName = issueAssignedTo.item(0).getAttributes().getNamedItem("name").getNodeValue();
-                                        Log.i("avatar",issueAssignedToAvatar);
                                         if (issueAssignedToAvatar != ""){
                                             avatar = "https://bluehouse.easyredmine.com"+issueAssignedToAvatar.substring(issueAssignedToAvatar.indexOf(":large=>\"") + 9, issueAssignedToAvatar.indexOf("\", :medium"));
                                         }
@@ -238,8 +236,6 @@ public class List extends AppCompatActivity {
                                     if (issueAssignedToId.equals(userId)) {
 
                                         issueCount++;
-                                        // ------------
-
                                         LinearLayout issueRow = new LinearLayout(this);
                                         issueRow.setBackgroundColor(Color.parseColor("#ffffff"));
                                         issueRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -452,7 +448,6 @@ public class List extends AppCompatActivity {
         System.out.print("ANTWORT: "+br);
         String response = new String();
         for (String line; (line = br.readLine()) != null; response += line);
-        Log.i("Antwort vom updaten", response);
         br.close();
         conn.disconnect();
         return timeEntryId;

@@ -28,4 +28,9 @@
     <string name="prompt_company">Unternehmen  (******.easyredmine.com)</string>
     <string name="prompt_username">Benutzername</string>
     <string name="error_incorrect_company">Unternehmen konnte nicht gefunden werden</string>
+    <string name="action_login">Abmelden</string>
+    <string name="pref_summary_password_text">Ihr Login-Passwort</string>
+    <string name="pref_summary_username_text">Ihr Login-Name</string>
+    <string name="pref_title_password_text">Passwort</string>
+    <string name="pref_title_username_text">Username</string>
 </resources>

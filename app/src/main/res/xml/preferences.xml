@@ -17,4 +17,17 @@
         android:inputType="number"
         android:summary="@string/pref_summary_userid_text"
         android:title="@string/pref_title_userid_text" />
+
+    <EditTextPreference
+        android:defaultValue="@string/pref_default_username_text"
+        android:key="username"
+        android:inputType="number"
+        android:summary="@string/pref_summary_username_text"
+        android:title="@string/pref_title_username_text" />
+    <EditTextPreference
+        android:defaultValue="@string/pref_default_password_text"
+        android:key="password"
+        android:inputType="number"
+        android:summary="@string/pref_summary_password_text"
+        android:title="@string/pref_title_password_text" />
 </PreferenceScreen>

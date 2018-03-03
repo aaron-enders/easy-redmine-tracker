@@ -20,7 +20,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
-import android.util.Log;
+import android.util.Base64;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -33,21 +33,25 @@ import android.widget.TextView;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.Authenticator;
-import java.net.PasswordAuthentication;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
@@ -84,6 +88,13 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(LoginActivity.this);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("apiKey", "");
+        editor.putString("userId", "");
+        editor.apply();
         // Set up the login form.
         mUsernameView = (AutoCompleteTextView) findViewById(R.id.username);
         populateAutoComplete();
@@ -104,6 +115,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
                 if (id == EditorInfo.IME_ACTION_DONE || id == EditorInfo.IME_NULL) {
+                    showProgress(true);
                     attemptLogin();
                     return true;
                 }
@@ -176,21 +188,15 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         if (mAuthTask != null) {
             return;
         }
-
-        // Reset errors.
         mUsernameView.setError(null);
         mCompanyView.setError(null);
         mPasswordView.setError(null);
-
-        // Store values at the time of the login attempt.
         String username = mUsernameView.getText().toString();
         String company = mCompanyView.getText().toString();
         String password = mPasswordView.getText().toString();
 
         boolean cancel = false;
         View focusView = null;
-
-
         if (TextUtils.isEmpty(password)) {
             mUsernameView.setError(getString(R.string.error_field_required));
             focusView = mPasswordView;
@@ -201,7 +207,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             focusView = mCompanyView;
             cancel = true;
         }
-        // Check for a valid username address.
         if (TextUtils.isEmpty(username)) {
             mUsernameView.setError(getString(R.string.error_field_required));
             focusView = mUsernameView;
@@ -209,13 +214,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         }
 
         if (cancel) {
-            // There was an error; don't attempt login and focus the first
-            // form field with an error.
             focusView.requestFocus();
         } else {
-            // Show a progress spinner, and kick off a background task to
-            // perform the user login attempt.
-            //showProgress(true);
             mAuthTask = new UserLoginTask(username, password, company);
             saveUserData(username, password, company);
             mAuthTask.execute((Void) null);
@@ -226,7 +226,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         SharedPreferences.Editor editor = settings.edit();
         editor.putString("companyName", company);
         editor.putString("username", username);
-        Log.i("Gespeichert:", username+", "+ company);
         editor.apply();
     }
 
@@ -331,6 +330,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         private final String mPassword;
         private final String mCompany;
         public String apiKey;
+        public String username;
+        public String userId;
+
+
 
 
         UserLoginTask(String username, String password, String company) {
@@ -341,88 +344,104 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         @Override
         protected Boolean doInBackground(Void... params) {
-
-            // TODO: attempt authentication against a network service.
-            Log.i("Loggin is", "yes");
-                // Simulate network access.
-                //Thread.sleep(2000);
-
                 return login(mCompany, mUsername, mPassword);
-
         }
 
-        public  boolean login(final String mCompany, final String mUsername, final String mPassword){
-
-            Log.i("Daten", "das hier:" + mCompany + mUsername + mPassword);
-
+        public  boolean login(final String mCompany, final String mUsername, final String mPassword) {
+            URL url = null;
+            try {
+                url = new URL("https://" + mCompany + ".easyredmine.com/users.xml?set_filter=1fc&login=" + mUsername);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+            String xmlResponse = getXMLFromUrl("https://" + mCompany + ".easyredmine.com/users.xml?set_filter=1fc&login=" + mUsername, mUsername, mPassword);
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = null;
-
-            SharedPreferences.Editor editor = null;
-            SharedPreferences pref;
-
-
-
-            Authenticator.setDefault (new Authenticator() {
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication (mUsername, mPassword.toCharArray());
-                }
-            });
-            String path = "https://" + mCompany + ".easyredmine.com/users.xml?set_filter=1&login=" + mUsername;
-
-            InputStream xml;
-
-            try
-            {
-                xml = new URL(path).openStream();
-            }catch (Exception e) {
-                e.printStackTrace();
-                Log.i("FEHLER: ", "Company nicht gefunden!");
-                return false;
-            }
-            String response = new Scanner(xml, "UTF-8").useDelimiter("\\A").next();
-            Log.i("DEBUG: APIKEY: ", "test"+response);
-            Document dom = null;
             try {
-                dom = db.parse(xml);
+                db = dbf.newDocumentBuilder();
+            } catch (ParserConfigurationException e) {
+                e.printStackTrace();
+            }
+            Document doc = null;
+            try {
+                doc = db.parse(new InputSource(new StringReader(xmlResponse)));
             } catch (SAXException e) {
-                Log.i("FEHLER: ", "XML konnte nicht geladen werden.");
                 e.printStackTrace();
-                return false;
             } catch (IOException e) {
-                Log.i("FEHLER: ", "XML konnte nicht geladen werden.");
                 e.printStackTrace();
+            }
+            if (doc == null){
                 return false;
             }
-            Node users = dom.getElementsByTagName("users").item(0);
-            NodeList usersNodeList = users.getChildNodes();
+            doc.getDocumentElement().normalize();
+            NodeList usersNodeList = doc.getElementsByTagName("user");
             Element user = (Element) usersNodeList.item(0);
-            String apiKey = user.getElementsByTagName("api_key").item(0).getTextContent();
-
-
-
+            apiKey = user.getElementsByTagName("api_key").item(0).getTextContent();
             if (apiKey != null && apiKey != ""){
-                String userId = user.getElementsByTagName("id").item(0).getTextContent();
-
-                editor.putString("apiKey", apiKey);
-                editor.putString("userId", userId);
-
+                userId = user.getElementsByTagName("id").item(0).getTextContent();
                 return true;
             }else{
                 return false;
             }
+
         }
+
+        public String getXMLFromUrl(String url, String username, String password) {
+            BufferedReader br = null;
+            try {
+                String authorization = "";
+                HttpURLConnection conn = (HttpURLConnection)(new URL(url)).openConnection();
+                conn.setRequestMethod("GET");
+                conn.setRequestProperty("User-Agent","Mozilla/5.0 ( compatible ) ");
+                conn.setRequestProperty("Accept", "*/*");
+                String userpass = username+":"+password;
+                byte[] data = userpass.getBytes("UTF-8");
+                String base64 = Base64.encodeToString(data, Base64.DEFAULT);
+                String basicAuth = "Basic " + base64;
+                conn.setRequestProperty ("Authorization", basicAuth);
+                conn.connect();
+                int status = conn.getResponseCode();
+                InputStream is;
+                try {
+                    is = conn.getInputStream();
+                } catch(FileNotFoundException exception){
+                    is = conn.getErrorStream();
+                }
+                BufferedReader theReader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+                StringBuilder response = new StringBuilder();
+                String reply;
+                while ((reply = theReader.readLine()) != null) {
+                    response.append(reply);
+                }
+                return response.toString();
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            } finally {
+                try {
+                    if (br != null) br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
 
 
         @Override
         protected void onPostExecute(final Boolean success) {
+            super.onPreExecute();
             mAuthTask = null;
             showProgress(false);
-
             if (success) {
-                finish();
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(LoginActivity.this);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString("apiKey", apiKey);
+                editor.putString("userId", userId);
+                editor.apply();
                 Intent i = new Intent(LoginActivity.this, aaronenders.easyredminetracker.List.class);
                 startActivity(i);
+                finish();
             } else {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
                 mPasswordView.requestFocus();
@@ -435,6 +454,5 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             showProgress(false);
         }
     }
-
 }
 
