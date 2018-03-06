@@ -1,7 +1,10 @@
 package aaronenders.easyredminetracker;
 
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -10,7 +13,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.StrictMode;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
@@ -19,6 +21,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -56,6 +59,8 @@ public class List extends AppCompatActivity {
     String[][] issues = new String[25][4];
     final Map <Integer, Integer> timeEntryIds = new HashMap<Integer, Integer>();
 
+    static Boolean refreshView = false;
+
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_menu, menu);
@@ -74,6 +79,7 @@ public class List extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     public void onResume() {
         super.onResume();
@@ -102,28 +108,33 @@ public class List extends AppCompatActivity {
         }else{
             String[] userInfos = Api.getUserInfos(companyName, userId, apiKey);
             setAvatarAndName(userInfos[1], userInfos[0]);
-
-            issues = Api.getIssues(companyName, apiKey, userId);
-            if (issues.length == 0){
-                Snackbar snacky = Snackbar.make(findViewById(R.id.ListContainer), R.string.nothingFoundCheckSettings,
-                        Snackbar.LENGTH_INDEFINITE);
-                View snackyView = snacky.getView();
-                TextView snackyTextView = (TextView) snackyView.findViewById(android.support.design.R.id.snackbar_text);
-                snackyTextView.setMaxLines(3);
-                snacky.setAction(R.string.makeSettingsButton, new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent i = new Intent(List.this, SettingsActivity.class);
-                        startActivity(i);
-                    }
-                }).show();
-            }else{
-                addIssueButtons(issues);
+            if (refreshView) {
+                initializeView();
+                refreshView = false;
             }
         }
     }
 
-
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    public void initializeView(){
+        issues = Api.getIssues(companyName, apiKey, userId);
+        if (issues.length == 0) {
+            Snackbar snacky = Snackbar.make(findViewById(R.id.ListContainer), R.string.nothingFoundCheckSettings,
+                    Snackbar.LENGTH_INDEFINITE);
+            View snackyView = snacky.getView();
+            TextView snackyTextView = (TextView) snackyView.findViewById(android.support.design.R.id.snackbar_text);
+            snackyTextView.setMaxLines(3);
+            snacky.setAction(R.string.makeSettingsButton, new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent i = new Intent(List.this, SettingsActivity.class);
+                    startActivity(i);
+                }
+            }).show();
+        } else {
+            addIssueButtons(issues);
+        }
+    }
 
     public void addIssueButtons(String[][] issues){
         LinearLayout layoutWrapper = (LinearLayout) findViewById(R.id.linearMain);
@@ -171,7 +182,6 @@ public class List extends AppCompatActivity {
                         }
                     }
                 });
-                //LinearLayout.LayoutParams forButtonParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                 issueButtonTrack.setBackgroundColor(0x00000000);
                 issueButtonTrack.setText(issueTimeEntryHours);
                 issueRow.addView(issueButtonTrack);
@@ -223,6 +233,7 @@ public class List extends AppCompatActivity {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     public  void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -240,6 +251,8 @@ public class List extends AppCompatActivity {
                 || companyName.isEmpty() ||  apiKey.isEmpty() || userId.isEmpty())){
             Intent i = new Intent(List.this, LoginActivity.class);
             startActivity(i);
+        }else{
+            refreshView = true;
         }
 
 
@@ -314,54 +327,49 @@ public class List extends AppCompatActivity {
             int currentTimeMinutes=Integer.parseInt(currentTimeParts[1]);
             int currentTimeSeconds=Integer.parseInt(currentTimeParts[2]);
 
-            currentTime = currentTimeSeconds + (60 * currentTimeMinutes) + (3600 * currentTimeHours);
+            CounterService.currentTime = currentTimeSeconds + (60 * currentTimeMinutes) + (3600 * currentTimeHours);
         }else{
-            currentTime = 0;
+            CounterService.currentTime = 0;
         }
-        String currentHours = Integer.toString(currentTime / 60 / 60);
+        String currentHours = Integer.toString(CounterService.currentTime / 60 / 60);
         currentIssueButtonTrack = clickedButtonTrack;
         currentIssueButtonTrack.setBackgroundColor(Color.parseColor("#efa126"));
-        startTime = SystemClock.uptimeMillis();
-        if (Objects.equals(newIssueId, lastIssueId) && timerIsRunning){
+        CounterService.startTime = SystemClock.uptimeMillis();
+        if (Objects.equals(newIssueId, lastIssueId) && CounterService.timerIsRunning){
             Toast.makeText(getApplicationContext(), getApplicationContext().getString(R.string.trackingStopped), Toast.LENGTH_SHORT).show();
-            timerHandler.removeCallbacks(updateTimerThread);
-            timerHandler.postDelayed(updateTimerThread, 1);
-            timerIsRunning = false;
-
+            CounterService.timerIsRunning = false;
+            unregisterReceiver(broadcastReceiver);
+            stopService(intent);
             return "stopped";
         }else{
-            timerIsRunning = true;
-            timerHandler.postDelayed(updateTimerThread, 0);
+            intent = new Intent(List.this, CounterService.class);
+            startService(intent);
+            registerReceiver(broadcastReceiver, new IntentFilter(CounterService.BROADCAST_ACTION));
+            CounterService.timerIsRunning = true;
         }
         return "saved";
     }
-
-
-
-    int currentTime;
-    long timeInMilliseconds = 0L;
-    private long startTime = 0L;
-    long updatedTime = 0L;
-    long timeSwapBuff = 0L;
-    private Button currentIssueButtonTrack;
-    final Handler timerHandler = new Handler();
-    boolean timerIsRunning = false;
-
-    private Runnable updateTimerThread = new Runnable() {
-
-        public void run() {
-            timeInMilliseconds = SystemClock.uptimeMillis() - startTime;
-            updatedTime = timeSwapBuff + timeInMilliseconds;
-            int secs = (int) (updatedTime / 1000) + currentTime;
-            int mins = secs / 60;
-            int hours = secs / 60 / 60;
-            secs = secs % 60;
-            currentIssueButtonTrack.setText("" + hours + ":"
-                    + "" + mins + ":"
-                    + String.format("%02d", secs));
-            if (timerIsRunning){
-                timerHandler.postDelayed(this, 0);
-            }
+    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            updateUI(intent);
         }
     };
+    private void updateUI(Intent intent) {
+        int secs = intent.getIntExtra("time", 0);
+        int mins = secs / 60;
+        int hours = secs / 60 / 60;
+        secs = secs % 60;
+        String timerValue = ("" + hours + ":"
+                + "" + mins + ":"
+                + String.format("%02d", secs));
+        Log.i("kommt an", timerValue);
+        currentIssueButtonTrack.setText(timerValue);
+    }
+
+
+    Intent intent;
+
+    private Button currentIssueButtonTrack;
+
 }

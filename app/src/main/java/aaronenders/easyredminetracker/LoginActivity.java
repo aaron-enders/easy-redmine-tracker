@@ -378,6 +378,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 editor.putString("apiKey", apiKey);
                 editor.putString("userId", userId);
                 editor.apply();
+                List.refreshView = true;
                 Intent i = new Intent(LoginActivity.this, aaronenders.easyredminetracker.List.class);
                 startActivity(i);
                 finish();

@@ -236,9 +236,10 @@ public class Api {
             br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
         } else {
             br = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+            Log.e("Time entry not updated", "Reponse: "+br);
+            Log.e("Body sent", "Body: "+body);
             return false;
         }
-        System.out.print("ANTWORT: "+br);
         String response = new String();
         for (String line; (line = br.readLine()) != null; response += line);
         br.close();
