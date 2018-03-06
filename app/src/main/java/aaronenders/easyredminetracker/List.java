@@ -1,5 +1,8 @@
 package aaronenders.easyredminetracker;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.annotation.TargetApi;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -66,17 +69,56 @@ public class List extends AppCompatActivity {
         inflater.inflate(R.menu.menu_menu, menu);
         return true;
     }
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.login) {
             startActivity(new Intent(this, LoginActivity.class));
         }
+        if (id == R.id.refresh) {
+            initializeView();
+        }
         if (id == R.id.home) {
             super.onBackPressed();
             return true;
         }
+
         return super.onOptionsItemSelected(item);
+    }
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
+    private void showProgress(final boolean show) {
+        // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
+        // for very easy animations. If available, use these APIs to fade-in
+        // the progress spinner.
+
+        final View  mProgressView = findViewById(R.id.login_progress);
+        final View  mMainView = findViewById(R.id.linearMain);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+
+            mMainView.setVisibility(show ? View.GONE : View.VISIBLE);
+            mMainView.animate().setDuration(shortAnimTime).alpha(
+                    show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    mMainView.setVisibility(show ? View.GONE : View.VISIBLE);
+                }
+            });
+
+            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+            mProgressView.animate().setDuration(shortAnimTime).alpha(
+                    show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+                }
+            });
+        } else {
+            // The ViewPropertyAnimator APIs are not available, so simply show
+            // and hide the relevant UI components.
+            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
@@ -117,6 +159,7 @@ public class List extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public void initializeView(){
+        showProgress(true);
         issues = Api.getIssues(companyName, apiKey, userId);
         if (issues.length == 0) {
             Snackbar snacky = Snackbar.make(findViewById(R.id.ListContainer), R.string.nothingFoundCheckSettings,
@@ -211,6 +254,7 @@ public class List extends AppCompatActivity {
             }
 
         }
+        showProgress(false);
     }
 
     public static Drawable drawableFromUrl(String url) throws IOException {
@@ -265,6 +309,7 @@ public class List extends AppCompatActivity {
             StrictMode.setThreadPolicy(policy);
         }
         FloatingActionButton pauseButton = findViewById(R.id.pauseButton);
+
     }
 
     public boolean setAvatarAndName(String avatar, String name){
