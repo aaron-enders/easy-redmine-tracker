@@ -126,11 +126,11 @@ public class List extends AppCompatActivity {
     public void onResume() {
         super.onResume();
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        String defaultCompanyName = getResources().getString(R.string.pref_default_companyname_text);
+        String defaultCompanyName = "";
         companyName = preferences.getString("companyName", defaultCompanyName);
-        String defaultApiKey = getResources().getString(R.string.pref_default_apikey_text);
+        String defaultApiKey = "";
         apiKey = preferences.getString("apiKey", defaultApiKey);
-        String defaultUserId = getResources().getString(R.string.pref_default_userid_text);
+        String defaultUserId = "";
         userId = preferences.getString("userId", defaultUserId);
         if((!preferences.contains("companyName")) || (!preferences.contains("apiKey")) || (!preferences.contains("userId")
         || companyName.isEmpty() ||  apiKey.isEmpty() || userId.isEmpty())){
@@ -285,11 +285,11 @@ public class List extends AppCompatActivity {
 
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        String defaultCompanyName = getResources().getString(R.string.pref_default_companyname_text);
+        String defaultCompanyName = "";
         companyName = preferences.getString("companyName", defaultCompanyName);
-        String defaultApiKey = getResources().getString(R.string.pref_default_apikey_text);
+        String defaultApiKey = "";
         apiKey = preferences.getString("apiKey", defaultApiKey);
-        String defaultUserId = getResources().getString(R.string.pref_default_userid_text);
+        String defaultUserId = "";
         userId = preferences.getString("userId", defaultUserId);
         if((!preferences.contains("companyName")) || (!preferences.contains("apiKey")) || (!preferences.contains("userId")
                 || companyName.isEmpty() ||  apiKey.isEmpty() || userId.isEmpty())){

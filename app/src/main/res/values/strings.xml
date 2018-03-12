@@ -5,16 +5,13 @@
     <string name="action_settings">Settings</string>
     <string name="pref_title_companyname_text">Company</string>
     <string name="pref_summary_companyname_text">EasyRedmine-name of your company</string>
-    <string name="pref_default_companyname_text"></string>
 
 
     <string name="pref_title_apikey_text">API-Key</string>
     <string name="pref_summary_apikey_text">Your API key</string>
-    <string name="pref_default_apikey_text"></string>
 
     <string name="pref_title_userid_text">User-ID</string>
     <string name="pref_summary_userid_text">ID of your EasyRedmine account</string>
-    <string name="pref_default_userid_text"></string>
 
     <string name="makeSettingsFirst">Before you can use this app, you have to set up some configuration</string>
     <string name="makeSettingsButton">set up</string>
@@ -39,13 +36,8 @@
     <string name="error_invalid_password">This password is too short</string>
     <string name="error_incorrect_password">This password is incorrect</string>
     <string name="error_field_required">This field is required</string>
-    <string name="permission_rationale">"Contacts permissions are needed for providing email
-        completions."
-    </string>
     <string name="prompt_company">Company (******.easyredmine.com)</string>
-    <string name="error_incorrect_company">Company can't be found.</string>
-    <string name="pref_default_username_text" />
-    <string name="pref_default_password_text" />
+    <string name="error_incorrect_company">Company can\'t be found.</string>
     <string name="pref_title_username_text">Username</string>
     <string name="pref_title_password_text">Password</string>
     <string name="pref_summary_username_text">Your login name</string>

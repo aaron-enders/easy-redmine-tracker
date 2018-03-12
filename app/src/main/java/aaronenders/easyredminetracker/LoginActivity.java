@@ -94,7 +94,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        String defaultCompanyName = getResources().getString(R.string.pref_default_companyname_text);
+        String defaultCompanyName = "";
         String companyName = preferences.getString("companyName", defaultCompanyName);
         String defaultUsername = "";
         String username = preferences.getString("username", defaultUsername);

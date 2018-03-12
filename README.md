@@ -5,6 +5,9 @@ Lists your issues and starts tracking time as soon as you tap one. When you star
 
 Updates your tracked time in EasyRedmine automatically.
 
+#Try it
+https://www.aaron-enders.de/downloads/ert.apk
+
 <img align="left" width="250" src="screenshots/1.png">
 <img align="left" width="250" src="screenshots/2.png">
 <img align="left" width="250" src="screenshots/3.png">
