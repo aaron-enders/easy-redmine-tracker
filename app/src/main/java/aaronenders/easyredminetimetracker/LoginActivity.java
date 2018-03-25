@@ -1,4 +1,4 @@
-package aaronenders.easyredminetracker;
+package aaronenders.easyredminetimetracker;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -379,7 +379,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 editor.putString("userId", userId);
                 editor.apply();
                 List.refreshView = true;
-                Intent i = new Intent(LoginActivity.this, aaronenders.easyredminetracker.List.class);
+                Intent i = new Intent(LoginActivity.this, aaronenders.easyredminetimetracker.List.class);
                 startActivity(i);
                 finish();
             } else {

@@ -1,4 +1,4 @@
-package aaronenders.easyredminetracker;
+package aaronenders.easyredminetimetracker;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

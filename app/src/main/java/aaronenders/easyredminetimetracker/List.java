@@ -1,4 +1,4 @@
-package aaronenders.easyredminetracker;
+package aaronenders.easyredminetimetracker;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;

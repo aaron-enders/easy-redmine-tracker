@@ -1,4 +1,4 @@
-package aaronenders.easyredminetracker;
+package aaronenders.easyredminetimetracker;
 
 import android.app.Service;
 import android.content.Intent;
@@ -10,7 +10,7 @@ import android.util.Log;
 public class CounterService  extends Service {
 
     private Intent intent;
-    public static final String BROADCAST_ACTION = "aaronenders.easyredminetracker.List";
+    public static final String BROADCAST_ACTION = "List";
 
     private Handler handler = new Handler();
     static long startTime;

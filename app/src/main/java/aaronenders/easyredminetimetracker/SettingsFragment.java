@@ -1,5 +1,5 @@
 
-package aaronenders.easyredminetracker;
+package aaronenders.easyredminetimetracker;
 
 import android.os.Bundle;
 import android.preference.PreferenceFragment;

@@ -1,4 +1,4 @@
-package aaronenders.easyredminetracker;
+package aaronenders.easyredminetimetracker;
 
 import android.os.Build;
 import android.support.annotation.RequiresApi;

@@ -1,4 +1,4 @@
-package aaronenders.easyredminetracker;
+package aaronenders.easyredminetimetracker;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
