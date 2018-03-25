@@ -6,7 +6,7 @@ Lists your issues and starts tracking time as soon as you tap one. When you star
 Updates your tracked time in EasyRedmine automatically.
 
 # Try it
-https://play.google.com/store/apps/details?id=aaronenders.easyredminetracker
+https://play.google.com/store/apps/details?id=aaronenders.easyredminetimetracker
 
 <img align="left" width="250" src="screenshots/1.png">
 <img align="left" width="250" src="screenshots/2.png">
