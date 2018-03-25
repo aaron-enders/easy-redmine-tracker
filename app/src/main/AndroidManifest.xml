@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="aaronenders.easyredminetracker">
+    package="aaronenders.easyredminetimetracker">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -14,7 +14,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name="aaronenders.easyredminetracker.List"
+            android:name="aaronenders.easyredminetimetracker.List"
             android:label="@string/app_name"
             android:screenOrientation="portrait">
             <intent-filter>
